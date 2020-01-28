@@ -3,11 +3,13 @@
 class Soduku:
     """
     A Soduku Solver using different search algorithms
+    Soduku are generated via https://qqwing.com/generate.html
     """
 
     def __init__(self):
         self.suduko = None
         self.solution = None
+        self.difficulty = None
         self.memo = None
 
     def read_soduku(self):
