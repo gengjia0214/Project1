@@ -1,3 +1,4 @@
+import csv
 
 
 class Soduku:
@@ -25,6 +26,15 @@ class Soduku:
         :param mode: selected approach -> {'dfs', 'bfs', 'deepening'}
         :return:
         """
+
+        def __to_str(board: list) -> str:
+            """
+            Convert the soduku 2-D grid to string
+            :return: string soduku rep
+            """
+
+            string = ""
+            return string
 
         if mode == 'dfs':
             self.dfs()
@@ -64,10 +74,48 @@ class Soduku:
         pass
 
     @staticmethod
-    def parser() -> list:
+    def parser(src_p) -> list:
         """
-        Data parser that read the soduku metadata .
+        Data parser that read the soduku metadata.
+        csv columns:
+        Puzzle,Solution,Givens,Singles,Hidden Singles,Naked Pairs,Hidden Pairs,Pointing Pairs/Triples,Box/Line Intersections,Guesses,Backtracks,Difficulty
+        :param src_p: input sudoku samples in csv format
         :return: List -> parsed data that is compatible with this solver
         """
-        pass
+
+        def to_board(string: str) -> list:
+            """
+            Convert raw soduku string into 2-D grid
+            :return: list -> [[]]
+            """
+
+            board = []
+            return board
+
+        parsed_data = []
+        with open(src_p, mode='r') as csv_file:
+            reader = csv.reader(csv_file, delimiter=',')
+            line_count = 0
+            for line in reader:
+                line_count += 1
+                if line_count == 1:
+                    continue
+
+                # build metadata
+                soduku_metadata = {'puzzle': to_board(line[0]), 'solution': line[1], 'given': line[2],
+                                   'singles': line[3], 'hidden_singles': line[4], 'naked_pairs': line[5],
+                                   'hidden_paris': line[6], 'triples': line[7], 'intersect': line[8],
+                                   'guesses': line[9], 'backtracks': line[10], 'difficulty': line[11]}
+                parsed_data.append(soduku_metadata)
+
+        return parsed_data
+
+
+
+
+
+src = '/home/jgeng/Documents/Git/ECE637-Project1/input/easy.csv'
+parsed = Soduku.parser(src)
+print(len(parsed))
+print(parsed[0])
 
