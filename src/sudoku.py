@@ -15,9 +15,10 @@ class Sudoku:
     To use:
     1. Create a solver instance:        solver = Sudoku()
     2. Load csv data:                   parsed_data = Sudoku.parser('/path/to/dir/easy.csv')
-    3. Read one data:                   sudoku_data = parsed_data[i]
-    4. Solve it with selected mode:     can_solve, time = solver.solve(mode='dfs')
-    5. Report & Read & Solve next one...
+    3. Get one data:                    sudoku_data = parsed_data[i]
+    4. Read the data:                   solver.read_sudoku(sudoku_data)
+    5. Solve it with selected mode:     can_solve, time = solver.solve(mode='dfs')
+    6. Report & Read & Solve next one...
     """
 
     def __init__(self):
@@ -34,6 +35,7 @@ class Sudoku:
         self.meta_data = None  # meta_data
 
         # data struct for the solvers
+        # TODO: might need multiple data structure here.
         self.memo = None
 
     def dfs(self) -> bool:
