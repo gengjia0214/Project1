@@ -50,7 +50,7 @@ class Sudoku:
         # TODO: implement iterative deepening approach
         pass
 
-    def read_soduku(self, sudoku_dict: dict):
+    def read_sudoku(self, sudoku_dict: dict):
         """
         Read one entry of the parsed sudoku metadata
         :return: void
@@ -64,7 +64,7 @@ class Sudoku:
         self.sudoku_board = to_board(sudoku_dict['puzzle'])
         self.meta_data = sudoku_dict
 
-    def solve_soduku(self, mode: str, repeat=1) -> (bool, float):
+    def solve_sudoku(self, mode: str, repeat=3) -> (bool, float):
         """
         Try to solve the soduku with selected approach
         :param mode: selected approach -> {'dfs', 'bfs', 'deepening'}
@@ -76,9 +76,10 @@ class Sudoku:
             string = "".join([board[i][j] for i in range(9) for j in range(9)])
             return string
 
-        start = time.time()
         k = repeat
         can_solve = False
+
+        start = time.time()
         while k > 0:
             if mode == 'dfs':
                 can_solve = self.dfs()
@@ -89,21 +90,16 @@ class Sudoku:
             else:
                 raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
             k -= 1
-
-        if to_str(self.sudoku_board) != self.meta_data['solution']:
-            raise Exception("Solution is incorrect!")
-
         end = time.time()
-        time_spent = round((end - start) / repeat, 4)
+
+        if self.meta_data['solution'] == 'False' and can_solve:
+            raise Exception("Solution is incorrect!")
+        elif to_str(self.sudoku_board) != self.meta_data['solution']:
+            raise Exception("Solution is incorrect!")
+        else:
+            time_spent = round((end - start) / repeat, 4)
 
         return can_solve, time_spent
-
-    def validate(self) -> bool:
-        """
-        Check whether the solution is valid
-        :return: bool -> True: solution is valid False: solution is not valid
-        """
-        pass
 
     @staticmethod
     def parser(src_p) -> list:
@@ -132,10 +128,4 @@ class Sudoku:
                 parsed_data.append(soduku_metadata)
 
         return parsed_data
-
-
-src = '/home/jgeng/Documents/Git/ECE637-Project1/input/invalid.csv'
-parsed = Soduku.parser(src)
-print(len(parsed))
-print(parsed[0])
 
