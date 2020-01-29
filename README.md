@@ -1,2 +1,2 @@
-# ECE637-Project1
-Soduku
+# Project1
+
