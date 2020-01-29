@@ -5,7 +5,7 @@ import csv
 - A Soduku Solver using different search algorithms
 - Soduku are generated via https://qqwing.com/generate.html
 - Invalid Soduku are fetched from http://sudopedia.enjoysudoku.com/Invalid_Test_Cases.html
-- Sudokus with multiple solutions are not under considered
+- Sudokus with multiple solutions are not included in the test cases as it is hard to create ground truth
 - Invalid sudoku includes unsolvable sudoku and sudoku with invalid init state
 """
 
