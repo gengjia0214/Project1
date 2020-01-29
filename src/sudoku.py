@@ -1,3 +1,4 @@
+import time
 import csv
 
 
@@ -6,7 +7,7 @@ class Sudoku:
     A Soduku Solver using different search algorithms
     Soduku are generated via https://qqwing.com/generate.html
     Invalid Soduku are fetched from http://sudopedia.enjoysudoku.com/Invalid_Test_Cases.html
-    Sudokus with multiple solutions are considered as valid
+    Sudokus with multiple solutions are not under considered
     Invalid sudoku includes unsolvable sudoku and sudoku with invalid init state
     """
 
@@ -63,34 +64,43 @@ class Sudoku:
         self.sudoku_board = to_board(sudoku_dict['puzzle'])
         self.meta_data = sudoku_dict
 
-    def solve_soduku(self, mode: str):
+    def solve_soduku(self, mode: str, repeat=1) -> (bool, float):
         """
         Try to solve the soduku with selected approach
         :param mode: selected approach -> {'dfs', 'bfs', 'deepening'}
+        :param repeat: solve the sudoku n times to get the average solving time
         :return:
         """
 
-        def __to_str(board: list) -> str:
-            """
-            Convert the soduku 2-D grid to string
-            :return: string soduku rep
-            """
-
-            string = ""
+        def to_str(board: list) -> str:
+            string = "".join([board[i][j] for i in range(9) for j in range(9)])
             return string
 
-        if mode == 'dfs':
-            self.dfs()
-        elif mode == 'bfs':
-            self.bfs()
-        elif mode == 'deepening':
-            self.deepening()
-        else:
-            raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
+        start = time.time()
+        k = repeat
+        can_solve = False
+        while k > 0:
+            if mode == 'dfs':
+                can_solve = self.dfs()
+            elif mode == 'bfs':
+                can_solve = self.bfs()
+            elif mode == 'deepening':
+                can_solve = self.deepening()
+            else:
+                raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
+            k -= 1
 
-    def compare(self) -> bool:
+        if to_str(self.sudoku_board) != self.meta_data['solution']:
+            raise Exception("Solution is incorrect!")
+
+        end = time.time()
+        time_spent = round((end - start) / repeat, 4)
+
+        return can_solve, time_spent
+
+    def validate(self) -> bool:
         """
-        Check whether the solution found is valid
+        Check whether the solution is valid
         :return: bool -> True: solution is valid False: solution is not valid
         """
         pass
