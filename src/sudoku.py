@@ -173,7 +173,7 @@ class Sudoku:
         lim_depth = 110
         while dfs(0, 0, lim_depth) = False：
             lim_depth += 50
-            if lim_depth > 810:
+            if lim_depth = 810:
                 return False
 
     def solve_sudoku(self, mode: str, repeat=1) -> (bool, float):
