@@ -6,7 +6,7 @@ import csv
 - Soduku are generated via https://qqwing.com/generate.html
 - Invalid Soduku are fetched from http://sudopedia.enjoysudoku.com/Invalid_Test_Cases.html
 - Sudokus with multiple solutions are not included in the test cases as it is hard to create ground truth
-- Invalid sudoku includes unsolvable sudoku and sudoku with invalid init state
+- Invalid sudoku includes unsolvable.csv sudoku and sudoku with invalid init state
 """
 
 
@@ -35,18 +35,60 @@ class Sudoku:
         self.meta_data = None  # meta_data
 
         # data struct for the solvers
-        # TODO: might need multiple data structure here.
-        self.memo = None
+        # memo for dfs but might also work for other solution
+        self.row_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th row
+        self.col_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th col
+        self.box_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th box
 
-    def dfs(self) -> bool:
+    def dfs(self, row, col) -> bool:
         """
-        Depth First Search Approach
-        Modify self.sudoku_board inplace
+        Depth First Search Approach. Recursive implementation. Modify self.sudoku_board inplace.
+        Try to fill column by column. If can finish filling the last column -> solution found.
         :return: bool -> True: solution exists False: solution does not exist
         """
 
-        # TODO: implement dfs approach
-        pass
+        # when done with the last column, found the solution
+        if col == 9:
+            return True
+
+        # next row and column to be fill
+        next_r = (row + 1) % 9
+        next_c = col if next_r != 0 else col + 1  # grow col when the curr col is fully filled
+
+        # if the current grid was filled, go to next step
+        if self.sudoku_board[row][col] != '.':
+            return self.dfs(next_r, next_c)
+
+        # if the current grid is not filled yet -> try to fill the current grid with a valid candidate
+        # valid input -> check row_used, col_used, box_used
+        # if no valid candidate -> return False
+        box_row = row // 3
+        box_col = col // 3
+        box_id = box_row * 3 + box_col
+
+        # try all candidate
+        for num in range(1, 10):
+            # check whether num is a valid candidate
+            if self.row_used[row][num] != 1 and self.col_used[col][num] != 1 and self.box_used[box_id][num] != 1:
+
+                # fill the sudoku board and update the used memo
+                self.row_used[row][num] = 1
+                self.col_used[col][num] = 1
+                self.box_used[box_id][num] = 1
+                self.sudoku_board[row][col] = str(num)
+
+                # go to next step -> True will be returned from the first valid solution
+                if self.dfs(next_r, next_c):
+                    return True
+
+                # before searching the next branch with dfs -> need to recover the board and memo
+                self.sudoku_board[row][col] = '.'
+                self.row_used[row][num] = 0
+                self.col_used[col][num] = 0
+                self.box_used[box_id][num] = 0
+
+        # all possible candidate are checked, no valid solution
+        return False
 
     def bfs(self) -> bool:
         """
@@ -68,23 +110,10 @@ class Sudoku:
         # TODO: implement iterative deepening approach
         pass
 
-    def read_sudoku(self, sudoku_dict: dict):
+    def solve_sudoku(self, mode: str, repeat=10) -> (bool, float):
         """
-        Read one entry of the parsed sudoku metadata
-        :return: void
-        """
-
-        def to_board(string: str) -> list:
-            board = [list(string[i*9:i*9+9]) for i in range(9)]
-            return board
-
-        # read metadata
-        self.sudoku_board = to_board(sudoku_dict['puzzle'])
-        self.meta_data = sudoku_dict
-
-    def solve_sudoku(self, mode: str, repeat=3) -> (bool, float):
-        """
-        Try to solve the soduku with selected approach
+        Try to solve the soduku with selected approach.
+        :raise Exception if the algorithm is not correct!
         :param mode: selected approach -> {'dfs', 'bfs', 'deepening'}
         :param repeat: solve the sudoku n times to get the average solving time
         :return: bool, float -> whether the input is solvable, time spent
@@ -101,7 +130,7 @@ class Sudoku:
         start = time.time()
         while k > 0:
             if mode == 'dfs':
-                can_solve = self.dfs()
+                can_solve = self.dfs(0, 0)
             elif mode == 'bfs':
                 can_solve = self.bfs()
             elif mode == 'deepening':
@@ -112,14 +141,68 @@ class Sudoku:
         end = time.time()
 
         # check correctness
+        solution = to_str(self.sudoku_board)
         if self.meta_data['solution'] == 'False' and can_solve:
-            raise Exception("Solution is incorrect!")
-        elif to_str(self.sudoku_board) != self.meta_data['solution']:
-            raise Exception("Solution is incorrect!")
+            raise Exception("There should be no solution!")
+        elif self.meta_data['solution'] != 'False' and to_str(self.sudoku_board) != self.meta_data['solution']:
+            raise Exception("Solution should be {} but was {}!".format(self.meta_data['solution'], solution))
         else:
-            time_spent = round((end - start) / repeat, 4)
+            time_spent = round((end - start) * 1000 / repeat)
 
+        # if reach here, means the algorithm is correct!
         return can_solve, time_spent
+
+    def read_sudoku(self, sudoku_dict: dict) -> bool:
+        """
+        Read one entry of the parsed sudoku metadata
+        :return: bool -> True the input is valid False the input is not valid
+        """
+
+        def to_board(string: str) -> list:
+            board = [list(string[i*9:i*9+9]) for i in range(9)]
+            return board
+
+        # read metadata
+        self.__reset_memo()
+        self.sudoku_board = to_board(sudoku_dict['puzzle'])
+        self.meta_data = sudoku_dict
+        return self.__update_memo()
+
+    def __reset_memo(self) -> None:
+        """
+        Reset the memo
+        :return: void
+        """
+
+        self.row_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th row
+        self.col_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th col
+        self.box_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th box
+
+    def __update_memo(self) -> bool:
+        """
+        Update the memo with the input sudoku board
+        :return: bool -> True input is valid False -> input is invalid
+        """
+
+        for row in range(9):
+            for col in range(9):
+                box_row = row // 3
+                box_col = col // 3
+                box_id = box_row * 3 + box_col  # the box id
+                fill_val = self.sudoku_board[row][col]
+                if fill_val != '.':
+                    fill_val = int(fill_val)
+
+                    # if the value is used for twice, input invalid
+                    if self.row_used[row][fill_val] == 1 or self.col_used[col][fill_val] == 1 \
+                            or self.box_used[box_id][fill_val] == 1:
+                        return False
+
+                    self.row_used[row][fill_val] = 1
+                    self.col_used[col][fill_val] = 1
+                    self.box_used[box_id][fill_val] = 1
+
+        return True
 
     @staticmethod
     def parser(src_p) -> list:
