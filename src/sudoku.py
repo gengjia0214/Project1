@@ -1,5 +1,7 @@
 import time
 import csv
+import copy
+from queue import SimpleQueue
 
 """
 - A Soduku Solver using different search algorithms
@@ -69,7 +71,7 @@ class Sudoku:
         # try all candidate
         for num in range(1, 10):
             # check whether num is a valid candidate
-            if self.row_used[row][num] != 1 and self.col_used[col][num] != 1 and self.box_used[box_id][num] != 1:
+            if self.row_used[row][num] == 0 and self.col_used[col][num] == 0 and self.box_used[box_id][num] == 0:
 
                 # fill the sudoku board and update the used memo
                 self.row_used[row][num] = 1
@@ -97,8 +99,64 @@ class Sudoku:
         :return: bool -> True: solution exists False: solution does not exist
         """
 
-        # TODO: implement bfs approach
-        pass
+        # prepare states
+        queue = SimpleQueue()
+        col, row = 0, 0  # fill values from col 0 -> col 8 stop at col 9
+        init_state = [copy.deepcopy(self.row_used), copy.deepcopy(self.col_used), copy.deepcopy(self.box_used),
+                      copy.deepcopy(self.sudoku_board)]
+
+        # find the init loc for starting the bfs
+        queue.put(init_state)
+        while not queue.empty():
+            size = queue.qsize()  # size of the current branch
+            i = 0
+
+            # each while loop work on one layer of the bfs tree
+            # total of 9x9=81 layers
+            while size > 0:
+
+                # work on the next state
+                # when down with the one layer, move to the next grid
+                curr_state = queue.get()
+
+                # move the row, col to the next grid when work on a new layer
+                if i == 0:
+                    # get the row and col for the next branches
+                    while curr_state[3][row][col] != '.':
+                        row = (row + 1) % 9
+                        col = col if row != 0 else col + 1  # grow col when the curr col is fully filled
+
+                        # col == 9 -> found solution
+                        if col == 9:
+                            self.sudoku_board = curr_state[3]
+                            return True
+
+                # get the box id
+                box_row = row // 3
+                box_col = col // 3
+                box_id = box_row * 3 + box_col
+
+                # get all possible next state from the current state
+                for num in range(1, 10):
+
+                    # check whether num is a valid candidate
+                    row_valid = curr_state[0][row][num] == 0
+                    col_valid = curr_state[1][col][num] == 0
+                    box_valid = curr_state[2][box_id][num] == 0
+
+                    # if row, col + num is valid, fill the next state
+                    if row_valid and col_valid and box_valid:
+                        next_state = copy.deepcopy(curr_state)
+                        next_state[0][row][num] = 1
+                        next_state[1][col][num] = 1
+                        next_state[2][box_id][num] = 1
+                        next_state[3][row][col] = str(num)
+                        queue.put(next_state)
+
+                size -= 1
+                i += 1
+
+        return False
 
     def deepening(self) -> bool:
         """
@@ -110,7 +168,7 @@ class Sudoku:
         # TODO: implement iterative deepening approach
         pass
 
-    def solve_sudoku(self, mode: str, repeat=10) -> (bool, float):
+    def solve_sudoku(self, mode: str, repeat=1) -> (bool, float):
         """
         Try to solve the soduku with selected approach.
         :raise Exception if the algorithm is not correct!
@@ -139,15 +197,17 @@ class Sudoku:
                 raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
             k -= 1
         end = time.time()
+        time_spent = round((end - start) * 1000 / repeat)
 
         # check correctness
         solution = to_str(self.sudoku_board)
         if self.meta_data['solution'] == 'False' and can_solve:
             raise Exception("There should be no solution!")
-        elif self.meta_data['solution'] != 'False' and to_str(self.sudoku_board) != self.meta_data['solution']:
-            raise Exception("Solution should be {} but was {}!".format(self.meta_data['solution'], solution))
-        else:
-            time_spent = round((end - start) * 1000 / repeat)
+        elif self.meta_data['solution'] != 'False':
+            if not can_solve:
+                raise Exception("There should be a solution but did not find any solution!")
+            if to_str(self.sudoku_board) != self.meta_data['solution']:
+                raise Exception("Solution should be {} but was {}!".format(self.meta_data['solution'], solution))
 
         # if reach here, means the algorithm is correct!
         return can_solve, time_spent
@@ -194,8 +254,8 @@ class Sudoku:
                     fill_val = int(fill_val)
 
                     # if the value is used for twice, input invalid
-                    if self.row_used[row][fill_val] == 1 or self.col_used[col][fill_val] == 1 \
-                            or self.box_used[box_id][fill_val] == 1:
+                    if self.row_used[row][fill_val] != 0 or self.col_used[col][fill_val] != 0 \
+                            or self.box_used[box_id][fill_val] != 0:
                         return False
 
                     self.row_used[row][fill_val] = 1
