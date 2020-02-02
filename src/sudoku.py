@@ -46,6 +46,9 @@ class Sudoku:
         """
         Depth First Search Approach. Recursive implementation. Modify self.sudoku_board inplace.
         Try to fill column by column. If can finish filling the last column -> solution found.
+        :param row
+        :param col
+        :param lim_dep
         :return: bool -> True: solution exists False: solution does not exist
         """
 
@@ -54,7 +57,7 @@ class Sudoku:
             return True
 
         # when depth reach limitation, return false
-        if lim_dep = 0:
+        if lim_dep == 0:
             return False
         
         # next row and column to be fill
