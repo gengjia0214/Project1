@@ -42,7 +42,7 @@ class Sudoku:
         self.col_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th col
         self.box_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th box
 
-    def dfs(self, row, col) -> bool:
+    def dfs(self, row, col, lim_dep = 729) -> bool:
         """
         Depth First Search Approach. Recursive implementation. Modify self.sudoku_board inplace.
         Try to fill column by column. If can finish filling the last column -> solution found.
@@ -53,6 +53,10 @@ class Sudoku:
         if col == 9:
             return True
 
+        # when depth reach limitation, return false
+        if lim_dep = 0:
+            return False
+        
         # next row and column to be fill
         next_r = (row + 1) % 9
         next_c = col if next_r != 0 else col + 1  # grow col when the curr col is fully filled
@@ -80,7 +84,7 @@ class Sudoku:
                 self.sudoku_board[row][col] = str(num)
 
                 # go to next step -> True will be returned from the first valid solution
-                if self.dfs(next_r, next_c):
+                if self.dfs(next_r, next_c, lim_dep - 1):
                     return True
 
                 # before searching the next branch with dfs -> need to recover the board and memo
@@ -166,7 +170,11 @@ class Sudoku:
         """
 
         # TODO: implement iterative deepening approach
-        pass
+        lim_depth = 100
+        while dfs(0, 0, lim_depth) = False：
+            lim_depth += 50
+            if lim_depth > 729:
+                return False
 
     def solve_sudoku(self, mode: str, repeat=1) -> (bool, float):
         """
