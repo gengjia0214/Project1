@@ -41,6 +41,7 @@ class Sudoku:
         self.row_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th row
         self.col_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th col
         self.box_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th box
+        self.max_qsize = 0
 
     def dfs(self, row, col, lim_dep=810) -> bool:
         """
@@ -121,7 +122,10 @@ class Sudoku:
             # each while loop work on one layer of the bfs tree
             # total of 9x9=81 layers
             while size > 0:
-
+                self.max_qsize = max(queue.qsize(), self.max_qsize)
+                # abort when size is too large
+                if self.max_qsize >= 650000:
+                    return False
                 # work on the next state
                 # when down with the one layer, move to the next grid
                 curr_state = queue.get()
@@ -159,10 +163,10 @@ class Sudoku:
                         next_state[2][box_id][num] = 1
                         next_state[3][row][col] = str(num)
                         queue.put(next_state)
-
+                del curr_state
                 size -= 1
                 i += 1
-
+        del queue
         return False
 
     def deepening(self) -> bool:
@@ -172,7 +176,6 @@ class Sudoku:
         :return: bool -> True: solution exists False: solution does not exist
         """
 
-        # TODO: implement iterative deepening approach
         lim_depth = 110
         while not self.dfs(0, 0, lim_depth):
             lim_depth += 50
@@ -180,12 +183,12 @@ class Sudoku:
                 return False
         return True
 
-    def solve_sudoku(self, mode: str, repeat=1) -> (bool, float):
+    def solve_sudoku(self, mode: str, check_correct=True) -> (bool, float):
         """
         Try to solve the soduku with selected approach.
         :raise Exception if the algorithm is not correct!
         :param mode: selected approach -> {'dfs', 'bfs', 'deepening'}
-        :param repeat: solve the sudoku n times to get the average solving time
+        :param check_correct: check whether the solution is correct
         :return: bool, float -> whether the input is solvable, time spent
         """
 
@@ -193,33 +196,31 @@ class Sudoku:
             string = "".join([board[i][j] for i in range(9) for j in range(9)])
             return string
 
-        k = repeat
-        can_solve = False
-
         # main loop
         start = time.time()
-        while k > 0:
-            if mode == 'dfs':
-                can_solve = self.dfs(0, 0)
-            elif mode == 'bfs':
-                can_solve = self.bfs()
-            elif mode == 'deepening':
-                can_solve = self.deepening()
-            else:
-                raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
-            k -= 1
+
+        if mode == 'dfs':
+            can_solve = self.dfs(0, 0)
+        elif mode == 'bfs':
+            can_solve = self.bfs()
+        elif mode == 'deepening':
+            can_solve = self.deepening()
+        else:
+            raise Exception("Mode must selected from ['dfs', 'bfs', 'deepening'] but was {}".format(mode))
+
         end = time.time()
-        time_spent = round((end - start) * 1000 / repeat)
+        time_spent = round((end - start) * 1000, 2)
 
         # check correctness
-        solution = to_str(self.sudoku_board)
-        if self.meta_data['solution'] == 'False' and can_solve:
-            raise Exception("There should be no solution!")
-        elif self.meta_data['solution'] != 'False':
-            if not can_solve:
-                raise Exception("There should be a solution but did not find any solution!")
-            if to_str(self.sudoku_board) != self.meta_data['solution']:
-                raise Exception("Solution should be {} but was {}!".format(self.meta_data['solution'], solution))
+        if check_correct:
+            solution = to_str(self.sudoku_board)
+            if self.meta_data['solution'] == 'False' and can_solve:
+                raise Exception("There should be no solution!")
+            elif self.meta_data['solution'] != 'False':
+                if not can_solve:
+                    raise Exception("There should be a solution but did not find any solution!")
+                if to_str(self.sudoku_board) != self.meta_data['solution']:
+                    raise Exception("Solution should be {} but was {}!".format(self.meta_data['solution'], solution))
 
         # if reach here, means the algorithm is correct!
         return can_solve, time_spent
@@ -249,6 +250,7 @@ class Sudoku:
         self.row_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th row
         self.col_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th col
         self.box_used = [[0 for i in range(10)] for j in range(9)]  # whether i-th value is used for j-th box
+        self.max_qsize = 0
 
     def __update_memo(self) -> bool:
         """
@@ -303,3 +305,7 @@ class Sudoku:
 
         return parsed_data
 
+
+state_dict = {'puzzle': ..., 'solution': ..., 'givens': ..., 'singles': ..., 'hidden_singles': ...,
+              'naked_pairs': ..., 'hidden_paris': ..., 'triples': ..., 'intersections': ..., 'guesses': ...,
+              'backtracks': ..., 'difficulty': ...}
